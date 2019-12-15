@@ -1,0 +1,208 @@
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+	*{
+		padding:0;
+		margin:0;
+	}
+	div{
+		display: block;
+	}
+	ul,li{
+		list-style: none;
+	}
+	.box{
+		width: 1200px;
+		height:380px;
+		border:1px solid red;
+		margin:100px auto;
+		position: relative;
+		overflow: hidden;
+	}
+	.slider{
+		width: 8400px;
+		position: absolute;
+		left: -1200px;
+	}
+	.slide{
+		width: 1200px;
+		overflow: hidden;
+		float:left;
+	}
+	.box>span{
+		display:block;
+		width: 30px;
+		height: 50px;
+		text-align: center;
+		cursor: pointer;
+		color:white;
+		top:175px;
+		line-height: 50px;
+		background: rgb(255,0,0);
+		font-size:30px;
+		position: absolute;
+	}
+	#left{
+		left:30px;
+	}
+	#right{
+		right: 30px;
+	}
+	.nav{
+		position: absolute;
+		left: 500px;
+		bottom: 20px;
+	}
+	.nav>li{
+		float: left;
+		width: 20px;
+		height:20px;
+		background: #ccc;
+		margin: 0 10px;
+		cursor: pointer;
+		margin: 0 10px;
+		border-radius: 50%;
+	}
+	.nav .active{
+		background: red;
+	}
+	</style>
+</head>
+<body>
+	<div class="box" id="box">
+		<div class="slider" id="slider">
+			<div class="slide"><img src="b5.png"></div>
+			<div class="slide"><img src="b1.png"></div>
+			<div class="slide"><img src="b2.png"></div>
+			<div class="slide"><img src="b3.png"></div>
+			<div class="slide"><img src="b4.png"></div>
+			<div class="slide"><img src="b5.png"></div>
+			<div class="slide"><img src="b1.png"></div>
+		</div>
+		<span id="left"></span>
+		<span id="right"></span>
+		<ul class="nav" id="nav">
+			<li class="active"></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+		</ul>
+	</div>
+	<script type = "text/javascript">
+		var box = document.getElementById('box');
+		var nav = document.getElementById('nav').children;
+		var slider = document.getElementById('slider');
+		var left = document.getElementById('left');
+		var right = document.getElementById('right');
+		var index = 1;
+		var isMoving = false;
+		function next(){//向后滚动一张图函数
+			if(!isMoving){//在此变量为false时也就是当滚动过程没有进行时才能进行一下过程 避免鼠标连续点击导致滚动过程发生错误
+				isMoving = true;//当滚动时此变量为true 所以鼠标点击过快时就无法进行滚动
+				index++;
+				navChange();//每滚动一次底部按钮都需在相应的位置显示变色 
+				animate(slider,{left:-1200*index},function(){
+					if(index > 5){//回调函数 在滚动到最后一张图片的时候立即回到第二张图片 使整个滚动过程能够连续循环进行
+						slider.style.left = "-1200px";
+						index = 1;
+					}
+					isMoving = false;//滚动一次后进行回调函数 将此变量赋为false 也就是滚动一次过程结束后才能进行下一次滚动过程
+				});
+			}
+		}
+		function pre(){//向前滚动一张图函数
+			if(isMoving){
+				return;
+			}
+			isMoving = true;
+			index--;
+			navChange();
+			animate(slider,{left:-1200*index},function(){
+				if(index === 0){//在滚动到第一张图片时立即回到倒数第二张图片
+					slider.style.left = "-6000px";
+					index = 5;
+				}
+				isMoving = false;
+			});
+		}
+		var timer = setInterval(next,2000);//没有事件时的自动向后滚动
+
+		box.onmouseover = function(){//鼠标滑上去时停止滚动
+			animate(left,{opacity:50});
+			animate(right,{opacity:50});
+			clearInterval(timer);
+		}
+
+		box.onmouseout = function(){//鼠标离开时开始滚动
+			animate(left,{opacity:0});
+			animate(right,{opacity:0});
+			timer = setInterval(next,2000);
+		}
+
+		right.onclick = next;//左箭头点击事件
+		left.onclick = pre;//右箭头点击事件
+
+		for(var i = 0;i < nav.length;i++){//给每一个按钮添加点击事件函数
+			nav[i].idx = i;//给节点添加属性，i始终为5
+			nav[i].onclick = function(){
+				index = this.idx+1;
+				navChange();//点击哪一个按钮，哪个按钮就变
+				animate(slider,{left:-1200*index})
+			}
+		}
+		function navChange(){//按钮变化
+			for(var i = 0;i < nav.length;i++){//先将所有的li的类名消除   将所有的颜色去掉
+				nav[i].className = "";
+			}
+			//给图片所在的按钮位置赋一个类名    将此按钮变色
+			if(index > 5){//由于按钮在列表中的下标与index不相同 所以需要以下条件来判断
+				nav[0].className = "active";
+			}else if(index === 0){
+				nav[4].className = "active";
+			}
+			else{
+				nav[index-1].className = "active";
+			}
+
+		}
+		function getStyle(obj, attr){
+			if(obj.currentStyle){
+				return obj.currentStyle[attr];
+			} else {
+				return getComputedStyle(obj, null)[attr];
+			}
+		}
+		function animate(obj,json,callback){
+			clearInterval(obj.timer);
+			obj.timer = setInterval(function(){
+				var isStop = true;
+				for(var attr in json){
+					var now = 0;
+					if(attr == 'opacity'){
+						now = parseInt(getStyle(obj,attr)*100);
+					}else{
+						now = parseInt(getStyle(obj,attr));
+					}
+					var speed = (json[attr] - now) / 8;
+					speed = speed>0?Math.ceil(speed):Math.floor(speed);
+					var cur = now + speed;
+					if(attr == 'opacity'){
+						obj.style[attr] = cur / 100;
+					}else{
+						obj.style[attr] = cur + "px";
+					}
+					if(json[attr] !== cur){
+						isStop = false;
+					}
+				}
+				if(isStop){
+					clearInterval(obj.timer);
+					callback&&callback();
+				}
+			}, 30)
+		}
+	</script>
+</body>
+</html>
